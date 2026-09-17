@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JANコードスキャナー</title>
-
-  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+  <title>カメラテスト</title>
 
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: sans-serif;
       text-align: center;
       padding: 20px;
       background: #f7f7f7;
@@ -17,10 +15,9 @@
 
     h1 {
       font-size: 24px;
-      margin-bottom: 20px;
     }
 
-    #video {
+    video {
       width: 100%;
       max-width: 500px;
       background: #000;
@@ -31,93 +28,62 @@
       width: 100%;
       max-width: 500px;
       padding: 16px;
-      margin: 15px 0;
+      margin: 20px 0;
       font-size: 18px;
       border: none;
       border-radius: 10px;
       background: #222;
-      color: white;
-    }
-
-    #result {
-      font-size: 22px;
-      font-weight: bold;
-      word-break: break-all;
-      margin-top: 20px;
+      color: #fff;
     }
 
     #status {
-      margin-top: 10px;
-      color: #666;
+      margin-top: 15px;
+      font-size: 16px;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>JANコードスキャナー</h1>
+  <h1>カメラテスト</h1>
 
-  <video id="video" playsinline></video>
+  <video id="video" autoplay playsinline></video>
 
-  <button id="startButton">カメラを起動</button>
+  <button onclick="startCamera()">カメラを起動</button>
 
-  <div id="status">カメラを起動してください</div>
-
-  <div id="result">
-    読み取ったJANコード<br>
-    <span id="jan">まだ読み取っていません</span>
-  </div>
+  <div id="status">ボタンを押してください</div>
 
   <script>
-    const video = document.getElementById("video");
-    const startButton = document.getElementById("startButton");
-    const status = document.getElementById("status");
-    const jan = document.getElementById("jan");
+    async function startCamera() {
 
-    let reader = null;
-    let controls = null;
-
-    startButton.addEventListener("click", async function () {
+      const status = document.getElementById("status");
+      const video = document.getElementById("video");
 
       try {
+
         status.textContent = "カメラを起動しています…";
 
-        reader = new ZXingBrowser.BrowserMultiFormatReader();
-
-        controls = await reader.decodeFromConstraints(
-          {
-            video: {
-              facingMode: { ideal: "environment" }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: {
+              ideal: "environment"
             }
           },
-          video,
-          function(result, error) {
+          audio: false
+        });
 
-            if (result) {
-              const code = result.getText();
+        video.srcObject = stream;
 
-              if (/^\d{8}$|^\d{12,14}$/.test(code)) {
-                jan.textContent = code;
-                status.textContent = "JANコードを読み取りました";
-
-                if (controls) {
-                  controls.stop();
-                }
-              }
-            }
-          }
-        );
-
-        status.textContent = "JANコードをカメラにかざしてください";
+        status.textContent = "カメラが起動しました";
 
       } catch (error) {
 
         console.error(error);
 
         status.textContent =
-          "カメラを起動できませんでした。カメラの許可を確認してください。";
+          "カメラを起動できませんでした：" + error.name;
       }
-    });
+    }
   </script>
 
 </body>
