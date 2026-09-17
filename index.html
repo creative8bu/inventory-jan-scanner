@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JANコードスキャナー</title>
 
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://unpkg.com/@zxing/browser@latest"></script>
 
   <style>
     body {
@@ -19,37 +19,58 @@
 
     h1 {
       font-size: 24px;
-      margin: 10px 0 20px;
+      margin: 10px 0 8px;
     }
 
-    #reader {
+    .description {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    #video {
       width: 100%;
       max-width: 500px;
-      margin: 0 auto;
-      background: #fff;
+      background: #000;
       border-radius: 12px;
-      overflow: hidden;
+    }
+
+    button {
+      margin-top: 18px;
+      padding: 14px 28px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      background: #222;
+      color: white;
+    }
+
+    #status {
+      margin: 15px auto;
+      max-width: 500px;
+      font-size: 14px;
+      color: #666;
     }
 
     #result {
       margin: 20px auto;
-      padding: 15px;
+      padding: 18px;
       max-width: 500px;
-      background: #fff;
-      border-radius: 10px;
-      font-size: 20px;
-      word-break: break-all;
+      background: white;
+      border-radius: 12px;
     }
 
     .label {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 5px;
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 8px;
     }
 
     #jan {
       font-size: 28px;
       font-weight: bold;
+      letter-spacing: 1px;
+      word-break: break-all;
     }
   </style>
 </head>
@@ -58,7 +79,19 @@
 
   <h1>JANコードスキャナー</h1>
 
-  <div id="reader"></div>
+  <div class="description">
+    商品のJANコードをカメラに向けてください
+  </div>
+
+  <video id="video" playsinline></video>
+
+  <div>
+    <button id="startButton">カメラを起動</button>
+  </div>
+
+  <div id="status">
+    カメラを起動してください
+  </div>
 
   <div id="result">
     <div class="label">読み取ったJANコード</div>
@@ -66,25 +99,93 @@
   </div>
 
   <script>
-    function onScanSuccess(decodedText) {
-      document.getElementById("jan").textContent = decodedText;
-    }
+    let controls = null;
 
-    function onScanFailure(error) {
-      // 読み取り中のエラーは表示しません
-    }
+    const video = document.getElementById("video");
+    const startButton = document.getElementById("startButton");
+    const status = document.getElementById("status");
+    const jan = document.getElementById("jan");
 
-    const scanner = new Html5QrcodeScanner(
-      "reader",
-      {
-        fps: 10,
-        qrbox: { width: 280, height: 150 },
-        rememberLastUsedCamera: true
-      },
-      false
-    );
+    startButton.addEventListener("click", async () => {
 
-    scanner.render(onScanSuccess, onScanFailure);
+      try {
+        status.textContent = "カメラを起動しています…";
+
+        const hints = new Map();
+
+        const formats = [
+          ZXingBrowser.BarcodeFormat.EAN_13,
+          ZXingBrowser.BarcodeFormat.EAN_8
+        ];
+
+        hints.set(
+          ZXingBrowser.DecodeHintType.POSSIBLE_FORMATS,
+          formats
+        );
+
+        const reader =
+          new ZXingBrowser.BrowserMultiFormatReader(hints);
+
+        const devices =
+          await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+
+        if (!devices.length) {
+          throw new Error("カメラが見つかりませんでした。");
+        }
+
+        // iPhoneでは背面カメラを優先
+        let selectedDevice = devices[devices.length - 1];
+
+        for (const device of devices) {
+          const label = device.label || "";
+
+          if (
+            label.toLowerCase().includes("back") ||
+            label.includes("背面") ||
+            label.toLowerCase().includes("environment")
+          ) {
+            selectedDevice = device;
+            break;
+          }
+        }
+
+        status.textContent =
+          "バーコードを画面中央に合わせてください";
+
+        controls = await reader.decodeFromVideoDevice(
+          selectedDevice.deviceId,
+          video,
+          (result, error) => {
+
+            if (result) {
+
+              const code = result.getText();
+
+              // JANとして13桁または8桁だけを採用
+              if (/^\d{13}$/.test(code) ||
+                  /^\d{8}$/.test(code)) {
+
+                jan.textContent = code;
+
+                status.textContent =
+                  "JANコードを読み取りました";
+
+                if (navigator.vibrate) {
+                  navigator.vibrate(100);
+                }
+              }
+            }
+          }
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+          "カメラを起動できませんでした。カメラの許可を確認してください。";
+      }
+    });
   </script>
 
 </body>
