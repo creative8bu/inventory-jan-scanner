@@ -3,30 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>JANコードスキャナー</title>
 
   <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
 
   <style>
     body {
-      margin: 0;
-      padding: 20px;
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      background: #f7f7f7;
-      color: #222;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       text-align: center;
+      padding: 20px;
+      background: #f7f7f7;
     }
 
     h1 {
       font-size: 24px;
-      margin: 10px 0 8px;
-    }
-
-    .description {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     #video {
@@ -34,45 +25,30 @@
       max-width: 500px;
       background: #000;
       border-radius: 12px;
-      display: block;
-      margin: 0 auto;
     }
 
     button {
-      margin-top: 18px;
-      padding: 15px 35px;
+      width: 100%;
+      max-width: 500px;
+      padding: 16px;
+      margin: 15px 0;
       font-size: 18px;
-      border: 0;
+      border: none;
       border-radius: 10px;
       background: #222;
-      color: #fff;
-    }
-
-    #status {
-      margin: 16px 0;
-      font-size: 14px;
-      color: #666;
+      color: white;
     }
 
     #result {
-      margin: 20px auto;
-      padding: 18px;
-      max-width: 500px;
-      background: #fff;
-      border-radius: 12px;
-    }
-
-    .label {
-      font-size: 13px;
-      color: #777;
-      margin-bottom: 8px;
-    }
-
-    #jan {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: bold;
-      letter-spacing: 1px;
       word-break: break-all;
+      margin-top: 20px;
+    }
+
+    #status {
+      margin-top: 10px;
+      color: #666;
     }
   </style>
 </head>
@@ -81,23 +57,15 @@
 
   <h1>JANコードスキャナー</h1>
 
-  <div class="description">
-    商品のバーコードをカメラに向けてください
-  </div>
-
   <video id="video" playsinline></video>
 
-  <button id="startButton">
-    カメラを起動
-  </button>
+  <button id="startButton">カメラを起動</button>
 
-  <div id="status">
-    「カメラを起動」を押してください
-  </div>
+  <div id="status">カメラを起動してください</div>
 
   <div id="result">
-    <div class="label">読み取ったJANコード</div>
-    <div id="jan">まだ読み取っていません</div>
+    読み取ったJANコード<br>
+    <span id="jan">まだ読み取っていません</span>
   </div>
 
   <script>
@@ -106,89 +74,49 @@
     const status = document.getElementById("status");
     const jan = document.getElementById("jan");
 
-    let codeReader = null;
-    let scanning = false;
+    let reader = null;
+    let controls = null;
 
     startButton.addEventListener("click", async function () {
 
-      if (scanning) {
-        return;
-      }
-
       try {
-
-        scanning = true;
-
         status.textContent = "カメラを起動しています…";
-        startButton.disabled = true;
 
-        codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+        reader = new ZXingBrowser.BrowserMultiFormatReader();
 
-        const devices =
-          await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
-
-        if (!devices || devices.length === 0) {
-          throw new Error("カメラが見つかりませんでした。");
-        }
-
-        // 背面カメラを優先
-        let selectedDevice = devices[0];
-
-        for (const device of devices) {
-
-          const label = device.label || "";
-
-          if (
-            label.toLowerCase().includes("back") ||
-            label.toLowerCase().includes("rear") ||
-            label.includes("背面")
-          ) {
-            selectedDevice = device;
-            break;
-          }
-        }
-
-        status.textContent =
-          "バーコードを画面中央に合わせてください";
-
-        await codeReader.decodeFromVideoDevice(
-          selectedDevice.deviceId,
-          video,
-          function (result, error) {
-
-            if (!result) {
-              return;
+        controls = await reader.decodeFromConstraints(
+          {
+            video: {
+              facingMode: { ideal: "environment" }
             }
+          },
+          video,
+          function(result, error) {
 
-            const value = result.getText();
+            if (result) {
+              const code = result.getText();
 
-            // JAN-13 または JAN-8 の数字だけを採用
-            if (/^\d{13}$/.test(value) ||
-                /^\d{8}$/.test(value)) {
+              if (/^\d{8}$|^\d{12,14}$/.test(code)) {
+                jan.textContent = code;
+                status.textContent = "JANコードを読み取りました";
 
-              jan.textContent = value;
-
-              status.textContent =
-                "JANコードを読み取りました";
-
-              if (navigator.vibrate) {
-                navigator.vibrate(100);
+                if (controls) {
+                  controls.stop();
+                }
               }
             }
           }
         );
 
+        status.textContent = "JANコードをカメラにかざしてください";
+
       } catch (error) {
 
         console.error(error);
 
-        scanning = false;
-        startButton.disabled = false;
-
         status.textContent =
-          "カメラを起動できませんでした。";
+          "カメラを起動できませんでした。カメラの許可を確認してください。";
       }
-
     });
   </script>
 
