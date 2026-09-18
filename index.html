@@ -17,7 +17,6 @@
 
     h1 {
       font-size: 24px;
-      margin-bottom: 15px;
     }
 
     video {
@@ -36,18 +35,18 @@
       border: none;
       border-radius: 10px;
       background: #222;
-      color: white;
+      color: #fff;
     }
 
     #status {
       margin: 12px 0;
-      color: #555;
+      font-size: 16px;
     }
 
     #result {
       margin-top: 20px;
       padding: 15px;
-      background: white;
+      background: #fff;
       border-radius: 10px;
       font-size: 20px;
       font-weight: bold;
@@ -63,7 +62,9 @@
 
   <button id="startButton">カメラを起動</button>
 
-  <div id="status">「カメラを起動」を押してください</div>
+  <div id="status">
+    「カメラを起動」を押してください
+  </div>
 
   <div id="result">
     読み取ったJANコード<br>
@@ -77,8 +78,6 @@
     const status = document.getElementById("status");
     const jan = document.getElementById("jan");
 
-    let stream = null;
-    let reader = null;
     let controls = null;
 
     startButton.addEventListener("click", async function() {
@@ -87,60 +86,55 @@
 
         status.textContent = "カメラを起動しています…";
 
-        // iPhoneの背面カメラを起動
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: {
-              ideal: "environment"
-            }
+        const reader =
+          new ZXingBrowser.BrowserMultiFormatReader();
+
+        controls = await reader.decodeFromConstraints(
+          {
+            video: {
+              facingMode: "environment"
+            },
+            audio: false
           },
-          audio: false
-        });
-
-        video.srcObject = stream;
-
-        await video.play();
-
-        status.textContent = "バーコードをカメラにかざしてください";
-
-        // JANコード読み取り開始
-        reader = new ZXingBrowser.BrowserMultiFormatReader();
-
-        controls = await reader.decodeFromVideoElement(
           video,
           function(result, error) {
 
-            if (result) {
+            if (!result) {
+              return;
+            }
 
-              const code = result.getText();
+            const code = result.getText();
 
-              // JAN-8 / JAN-13を判定
-              if (/^\d{8}$/.test(code) || /^\d{13}$/.test(code)) {
+            console.log("読み取り結果:", code);
 
-                jan.textContent = code;
-                status.textContent = "JANコードを読み取りました！";
+            // JAN-8 または JAN-13
+            if (
+              /^\d{8}$/.test(code) ||
+              /^\d{13}$/.test(code)
+            ) {
 
-                // カメラ停止
-                if (stream) {
-                  stream.getTracks().forEach(function(track) {
-                    track.stop();
-                  });
-                }
+              jan.textContent = code;
 
-                if (controls) {
-                  controls.stop();
-                }
+              status.textContent =
+                "JANコードを読み取りました！";
+
+              if (controls) {
+                controls.stop();
               }
             }
+
           }
         );
+
+        status.textContent =
+          "バーコードをカメラにかざしてください";
 
       } catch (error) {
 
         console.error(error);
 
         status.textContent =
-          "エラー：" + error.name;
+          "エラー：" + error.message;
 
       }
 
