@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>JANコードスキャナー</title>
 
-  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+  <script src="https://unpkg.com/@zxing/browser@latest"></script>
 
   <style>
     body {
@@ -107,7 +108,6 @@
 
             console.log("読み取り結果:", code);
 
-            // JAN-8 または JAN-13
             if (
               /^\d{8}$/.test(code) ||
               /^\d{13}$/.test(code)
