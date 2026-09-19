@@ -105,12 +105,28 @@
 
                 const code = resultData.getText();
 
-                result.textContent =
-                  "読み取り成功： " + code;
+                result.innerHTML =
+  "読み取り成功： " + code +
+  '<br><button id="copyButton">JANコードをコピー</button>';
 
-                status.textContent =
-                  "JANコードを読み取りました";
+status.textContent =
+  "JANコードを読み取りました";
 
+document.getElementById("copyButton").addEventListener("click", async function() {
+
+  try {
+
+    await navigator.clipboard.writeText(code);
+
+    this.textContent = "コピーしました";
+
+  } catch (error) {
+
+    alert("コピーできませんでした。JANコードを長押ししてコピーしてください。");
+
+  }
+
+});
               }
 
             }
