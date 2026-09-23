@@ -1,10 +1,9 @@
-```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JANコード読み取りテスト</title>
+  <title>JANコード読み取り</title>
 
   <script src="https://unpkg.com/@zxing/browser@latest"></script>
 
@@ -13,18 +12,29 @@
       font-family: sans-serif;
       text-align: center;
       padding: 20px;
+      margin: 0;
+      background: #fff;
+    }
+
+    h1 {
+      font-size: 24px;
     }
 
     button {
       font-size: 18px;
       padding: 14px 25px;
       margin: 15px 0;
+      border-radius: 10px;
+      border: none;
+      background: #222;
+      color: #fff;
     }
 
     video {
       width: 100%;
       max-width: 500px;
       background: #000;
+      margin-top: 10px;
     }
 
     #result {
@@ -33,14 +43,19 @@
       margin-top: 20px;
       word-break: break-all;
     }
+
+    #returnMessage {
+      margin-top: 15px;
+      font-size: 18px;
+    }
   </style>
 </head>
 
 <body>
 
-  <h1>JANコード読み取りテスト</h1>
+  <h1>📷 JANコード読み取り</h1>
 
-  <p id="status">ZXingを確認しています…</p>
+  <p id="status">準備しています…</p>
 
   <button id="startButton">カメラを起動</button>
 
@@ -50,6 +65,8 @@
 
   <div id="result"></div>
 
+  <div id="returnMessage"></div>
+
   <script>
     window.addEventListener("load", function() {
 
@@ -57,6 +74,7 @@
       const startButton = document.getElementById("startButton");
       const video = document.getElementById("video");
       const result = document.getElementById("result");
+      const returnMessage = document.getElementById("returnMessage");
 
       if (typeof ZXingBrowser === "undefined") {
         status.textContent = "ZXingの読み込み失敗";
@@ -70,10 +88,12 @@
 
         status.textContent = "カメラを起動しています…";
         result.textContent = "";
+        returnMessage.textContent = "";
 
         try {
 
-          const codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+          const codeReader =
+            new ZXingBrowser.BrowserMultiFormatReader();
 
           const devices =
             await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
@@ -105,28 +125,40 @@
 
                 const code = resultData.getText();
 
-                result.innerHTML =
-  "読み取り成功： " + code +
-  '<br><button id="copyButton">JANコードをコピー</button>';
+                status.textContent =
+                  "JANコードを読み取りました";
 
-status.textContent =
-  "JANコードを読み取りました";
+                result.textContent =
+                  "読み取り成功： " + code;
 
-document.getElementById("copyButton").addEventListener("click", async function() {
+                // カメラを停止
+                codeReader.reset();
 
-  try {
+                if (video.srcObject) {
+                  video.srcObject.getTracks().forEach(track => {
+                    track.stop();
+                  });
+                  video.srcObject = null;
+                }
 
-    await navigator.clipboard.writeText(code);
+                /*
+                 * 読み取ったJANを在庫管理Webアプリへ渡す
+                 */
+                const inventoryUrl =
+                  "https://script.google.com/macros/s/AKfycbxx_1G5PTs6-jjCBzA24YGer88fTbjv30Er2veuj5MuUFxvct61DsIzkk1vPdlkRAXL3A/exec";
 
-    this.textContent = "コピーしました";
+                const returnUrl =
+                  inventoryUrl +
+                  "?jan=" +
+                  encodeURIComponent(code);
 
-  } catch (error) {
+                returnMessage.textContent =
+                  "在庫管理画面へ戻ります…";
 
-    alert("コピーできませんでした。JANコードを長押ししてコピーしてください。");
+                setTimeout(function() {
+                  window.location.href = returnUrl;
+                }, 1000);
 
-  }
-
-});
               }
 
             }
@@ -148,4 +180,3 @@ document.getElementById("copyButton").addEventListener("click", async function()
 
 </body>
 </html>
-```
