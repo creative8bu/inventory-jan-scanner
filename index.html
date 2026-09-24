@@ -49,10 +49,16 @@
       font-size: 18px;
     }
   </style>
-</head>
+</head>  
+<body>
+
+  </head>
 
 <body>
 
+<div id="returnArea" style="display:none; margin-top:20px;">
+  <button id="returnButton2">在庫管理画面へ戻る</button>
+</div>
   <h1>📷 JANコード読み取り</h1>
 
   <p id="status">準備しています…</p>
@@ -152,13 +158,15 @@
                   "?jan=" +
                   encodeURIComponent(code);
 
-                returnMessage.innerHTML =
-  '<p>JANコードを読み取りました。</p>' +
-  '<button id="returnButton">在庫管理画面へ戻る</button>';
+returnMessage.innerHTML =
+  '<p>JANコードを読み取りました。</p>';
 
-document.getElementById("returnButton").addEventListener("click", function() {
+const returnArea = document.getElementById("returnArea");
+returnArea.style.display = "block";
+
+document.getElementById("returnButton2").onclick = function() {
   window.location.href = returnUrl;
-});
+};
 
               }
 
