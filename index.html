@@ -159,12 +159,16 @@
                   encodeURIComponent(code);
 
 returnMessage.innerHTML =
-  '<p>JANコードを読み取りました。</p>' +
-  '<a href="' + returnUrl + '" ' +
-  'style="display:inline-block; font-size:18px; padding:14px 25px; ' +
-  'margin:15px 0; border-radius:10px; background:#222; color:#fff; ' +
-  'text-decoration:none;">在庫管理画面へ戻る</a>';
-                
+  '<p>JANコードを読み取りました。</p>';
+
+const returnArea = document.getElementById("returnArea");
+const returnButton = document.getElementById("returnButton2");
+
+returnArea.style.display = "block";
+
+returnButton.onclick = function() {
+  window.location.href = returnUrl;
+};
               }
 
             }
