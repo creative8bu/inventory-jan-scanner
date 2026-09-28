@@ -131,11 +131,24 @@
 
                 const code = resultData.getText();
 
-                status.textContent =
-                  "JANコードを読み取りました";
+status.textContent =
+  "JANコードを読み取りました";
 
-                result.textContent =
-                  "読み取り成功： " + code;
+const inventoryUrl =
+  "https://script.google.com/macros/s/AKfycbxx_1G5PTs6-jjCBzA24YGer88fTbjv30Er2veuj5MuUFxvct61DsIzkk1vPdlkRAXL3A/exec";
+
+const returnUrl =
+  inventoryUrl +
+  "?jan=" +
+  encodeURIComponent(code);
+
+result.innerHTML =
+  "読み取り成功： " + code +
+  '<br><br>' +
+  '<a href="' + returnUrl + '" ' +
+  'style="display:inline-block; font-size:20px; padding:16px 28px; ' +
+  'border-radius:10px; background:#222; color:#fff; ' +
+  'text-decoration:none;">在庫管理画面へ戻る</a>';
 
                 // カメラを停止
                 codeReader.reset();
