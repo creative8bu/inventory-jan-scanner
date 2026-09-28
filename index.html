@@ -48,17 +48,22 @@
       margin-top: 15px;
       font-size: 18px;
     }
+
+    #returnButton {
+      display: inline-block;
+      font-size: 20px;
+      padding: 16px 28px;
+      border-radius: 10px;
+      background: #222;
+      color: #fff;
+      text-decoration: none;
+      margin-top: 20px;
+    }
   </style>
-</head>  
-<body>
-
-  </head>
+</head>
 
 <body>
 
-<div id="returnArea" style="display:none; margin-top:20px;">
-  <button id="returnButton2">在庫管理画面へ戻る</button>
-</div>
   <h1>📷 JANコード読み取り</h1>
 
   <p id="status">準備しています…</p>
@@ -82,6 +87,7 @@
       const result = document.getElementById("result");
       const returnMessage = document.getElementById("returnMessage");
 
+      // ZXing確認
       if (typeof ZXingBrowser === "undefined") {
         status.textContent = "ZXingの読み込み失敗";
         startButton.disabled = true;
@@ -90,6 +96,8 @@
 
       status.textContent = "ZXingの読み込み成功";
 
+
+      // カメラ起動
       startButton.addEventListener("click", async function() {
 
         status.textContent = "カメラを起動しています…";
@@ -109,6 +117,7 @@
             return;
           }
 
+          // 最初のカメラを選択
           let selectedDeviceId = devices[0].deviceId;
 
           // 背面カメラを優先
@@ -122,6 +131,8 @@
 
           status.textContent = "カメラ起動中…";
 
+
+          // JANコード読み取り
           codeReader.decodeFromVideoDevice(
             selectedDeviceId,
             video,
@@ -131,53 +142,53 @@
 
                 const code = resultData.getText();
 
-status.textContent =
-  "JANコードを読み取りました";
+                status.textContent =
+                  "JANコードを読み取りました";
 
-const inventoryUrl =
-  "https://script.google.com/macros/s/AKfycbxx_1G5PTs6-jjCBzA24YGer88fTbjv30Er2veuj5MuUFxvct61DsIzkk1vPdlkRAXL3A/exec";
 
-const returnUrl =
-  inventoryUrl +
-  "?jan=" +
-  encodeURIComponent(code);
-
-result.innerHTML =
-  "読み取り成功： " + code +
-  '<br><br>' +
-  '<a href="' + returnUrl + '" ' +
-  'style="display:inline-block; font-size:20px; padding:16px 28px; ' +
-  'border-radius:10px; background:#222; color:#fff; ' +
-  'text-decoration:none;">在庫管理画面へ戻る</a>';
-
-                // カメラを停止
-                codeReader.reset();
-
-                if (video.srcObject) {
-                  video.srcObject.getTracks().forEach(track => {
-                    track.stop();
-                  });
-                  video.srcObject = null;
-                }
-
-                /*
-                 * 読み取ったJANを在庫管理Webアプリへ渡す
-                 */
+                // Google Apps Script 在庫管理画面
                 const inventoryUrl =
                   "https://script.google.com/macros/s/AKfycbxx_1G5PTs6-jjCBzA24YGer88fTbjv30Er2veuj5MuUFxvct61DsIzkk1vPdlkRAXL3A/exec";
 
+
+                // JANコードを付けて戻る
                 const returnUrl =
                   inventoryUrl +
                   "?jan=" +
                   encodeURIComponent(code);
 
-result.innerHTML =
-  "読み取り成功： " + code +
-  '<br><br>' +
-  '<a href="' + returnUrl + '" ' +
-  'style="display:inline-block; font-size:20px; padding:16px 28px; ' +
-  'border-radius:10px; background:#222; color:#fff; ' +
-  'text-decoration:none;">在庫管理画面へ戻る</a>';
+
+                // 結果表示
+                result.innerHTML =
+                  "読み取り成功： " + code +
+                  '<br><br>' +
+                  '<a id="returnButton" href="' +
+                  returnUrl +
+                  '">在庫管理画面へ戻る</a>';
+
+
+                // カメラ停止
+                try {
+                  codeReader.reset();
+                } catch (e) {
+                  console.log("カメラ停止処理をスキップしました");
+                }
+
+
+                // カメラのストリーム停止
+                if (video.srcObject) {
+                  video.srcObject
+                    .getTracks()
+                    .forEach(track => {
+                      track.stop();
+                    });
+
+                  video.srcObject = null;
+                }
+
+
+                // カメラ起動ボタンを無効化
+                startButton.disabled = true;
               }
 
             }
