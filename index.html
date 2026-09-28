@@ -43,22 +43,6 @@
       margin-top: 20px;
       word-break: break-all;
     }
-
-    #returnMessage {
-      margin-top: 15px;
-      font-size: 18px;
-    }
-
-    #returnButton {
-      display: inline-block;
-      font-size: 20px;
-      padding: 16px 28px;
-      border-radius: 10px;
-      background: #222;
-      color: #fff;
-      text-decoration: none;
-      margin-top: 20px;
-    }
   </style>
 </head>
 
@@ -79,18 +63,20 @@
   <div id="returnMessage"></div>
 
   <script>
+
     window.addEventListener("load", function() {
 
       const status = document.getElementById("status");
       const startButton = document.getElementById("startButton");
       const video = document.getElementById("video");
       const result = document.getElementById("result");
-      const returnMessage = document.getElementById("returnMessage");
 
       // ZXing確認
       if (typeof ZXingBrowser === "undefined") {
+
         status.textContent = "ZXingの読み込み失敗";
         startButton.disabled = true;
+
         return;
       }
 
@@ -102,7 +88,6 @@
 
         status.textContent = "カメラを起動しています…";
         result.textContent = "";
-        returnMessage.textContent = "";
 
         try {
 
@@ -113,11 +98,13 @@
             await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
 
           if (!devices || devices.length === 0) {
+
             status.textContent = "カメラが見つかりません";
+
             return;
           }
 
-          // 最初のカメラを選択
+          // 最初のカメラ
           let selectedDeviceId = devices[0].deviceId;
 
           // 背面カメラを優先
@@ -126,7 +113,9 @@
           );
 
           if (backCamera) {
+
             selectedDeviceId = backCamera.deviceId;
+
           }
 
           status.textContent = "カメラ起動中…";
@@ -136,60 +125,74 @@
           codeReader.decodeFromVideoDevice(
             selectedDeviceId,
             video,
-            (resultData, error) => {
+            function(resultData, error) {
 
-              if (resultData) {
-
-                const code = resultData.getText();
-
-                status.textContent =
-                  "JANコードを読み取りました";
-
-
-                // Google Apps Script 在庫管理画面
-                const inventoryUrl =
-                  "https://script.google.com/macros/s/AKfycbxx_1G5PTs6-jjCBzA24YGer88fTbjv30Er2veuj5MuUFxvct61DsIzkk1vPdlkRAXL3A/exec";
-
-
-                // JANコードを付けて戻る
-                const returnUrl =
-                  inventoryUrl +
-                  "?jan=" +
-                  encodeURIComponent(code);
-
-
-                // 結果表示
-                result.innerHTML =
-                  "読み取り成功： " + code +
-                  '<br><br>' +
-                  '<a id="returnButton" href="' +
-                  returnUrl +
-                  '">在庫管理画面へ戻る</a>';
-
-
-                // カメラ停止
-                try {
-                  codeReader.reset();
-                } catch (e) {
-                  console.log("カメラ停止処理をスキップしました");
-                }
-
-
-                // カメラのストリーム停止
-                if (video.srcObject) {
-                  video.srcObject
-                    .getTracks()
-                    .forEach(track => {
-                      track.stop();
-                    });
-
-                  video.srcObject = null;
-                }
-
-
-                // カメラ起動ボタンを無効化
-                startButton.disabled = true;
+              if (!resultData) {
+                return;
               }
+
+              const code = resultData.getText();
+
+              status.textContent =
+                "JANコードを読み取りました";
+
+
+              // Google Apps Script
+              const inventoryUrl =
+                "https://script.google.com/macros/s/AKfycbxx_1G5PTs6-jjCBzA24YGer88fTbjv30Er2veuj5MuUFxvct61DsIzkk1vPdlkRAXL3A/exec";
+
+
+              // JANコードを付けて戻る
+              const returnUrl =
+                inventoryUrl +
+                "?jan=" +
+                encodeURIComponent(code);
+
+
+              result.innerHTML =
+                "読み取り成功： " + code +
+                "<br><br>" +
+                '<a href="' +
+                returnUrl +
+                '" ' +
+                'style="display:inline-block;' +
+                'font-size:20px;' +
+                'padding:16px 28px;' +
+                'border-radius:10px;' +
+                'background:#222;' +
+                'color:#fff;' +
+                'text-decoration:none;">' +
+                "在庫管理画面へ戻る" +
+                "</a>";
+
+
+              // カメラ停止
+              try {
+
+                codeReader.reset();
+
+              } catch (e) {
+
+                console.log("カメラ停止処理");
+
+              }
+
+
+              if (video.srcObject) {
+
+                video.srcObject
+                  .getTracks()
+                  .forEach(function(track) {
+
+                    track.stop();
+
+                  });
+
+                video.srcObject = null;
+              }
+
+
+              startButton.disabled = true;
 
             }
           );
@@ -206,6 +209,7 @@
       });
 
     });
+
   </script>
 
 </body>
